@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { countries } from '@/data/countries';
+import { countries, getCountriesByContinent, Continent } from '@/data/countries';
 import { useFlagSorting, RankedCountry } from '@/hooks/useFlagSorting';
 import FlagCard from '@/components/FlagCard';
 import ProgressBar from '@/components/ProgressBar';
+import ContinentSelector from '@/components/ContinentSelector';
 
 export default function Home() {
-  const [view, setView] = useState<'start' | 'sorting' | 'results'>('start');
+  const [view, setView] = useState<'start' | 'continent-select' | 'sorting' | 'results'>('start');
   const [hasSavedProgress, setHasSavedProgress] = useState(false);
+  const [selectedContinents, setSelectedContinents] = useState<Continent[]>([]);
+  const [filteredCountries, setFilteredCountries] = useState(countries);
+  const [isProcessingChoice, setIsProcessingChoice] = useState(false);
   
   const {
     favorites,
@@ -20,7 +24,7 @@ export default function Home() {
     reset,
     skipComparison,
     progress
-  } = useFlagSorting(countries);
+  } = useFlagSorting(filteredCountries);
 
   // Check for saved progress on component mount
   useEffect(() => {
@@ -41,10 +45,39 @@ export default function Home() {
       }
     }
   }, []);
-
   const handleStart = () => {
+    setView('continent-select');
+  };
+
+  const handleContinentSelection = () => {
+    if (selectedContinents.length === 0) {
+      // If no continents selected, use all countries
+      setFilteredCountries(countries);
+    } else {
+      // Filter countries by selected continents
+      const filtered = selectedContinents.flatMap(continent => 
+        getCountriesByContinent(continent)
+      );
+      setFilteredCountries(filtered);
+    }
     startSorting();
     setView('sorting');
+  };
+
+  const handleContinentToggle = (continent: Continent) => {
+    setSelectedContinents(prev => 
+      prev.includes(continent) 
+        ? prev.filter(c => c !== continent)
+        : [...prev, continent]
+    );
+  };
+
+  const handleSelectAllContinents = () => {
+    setSelectedContinents(['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania']);
+  };
+
+  const handleSelectNoContinents = () => {
+    setSelectedContinents([]);
   };
   const handleResume = () => {
     // If there's saved progress, just switch to the appropriate view
@@ -56,18 +89,27 @@ export default function Home() {
       handleStart();
     }
   };
-
   const handleChoice = (country: RankedCountry) => {
+    if (isProcessingChoice) return; // Prevent rapid clicking
+    
+    setIsProcessingChoice(true);
     makeChoice(country);
+    
+    // Reset the processing flag after a short delay
+    setTimeout(() => {
+      setIsProcessingChoice(false);
+    }, 300);
+    
     if (isComplete) {
       setView('results');
     }
   };
-
   const handleReset = () => {
     reset();
     setView('start');
     setHasSavedProgress(false);
+    setSelectedContinents([]);
+    setFilteredCountries(countries);
   };
 
   const handleViewResults = () => {
@@ -218,6 +260,83 @@ export default function Home() {
     );
   }
 
+  if (view === 'continent-select') {
+    return (
+      <motion.div 
+        className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-8"
+        initial={{ opacity: 0, x: 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -100 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.h1 
+              className="text-5xl font-bold text-gray-800 dark:text-white mb-4"
+              initial={{ scale: 0.5 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+            >
+              🌍 Choose Your Regions
+            </motion.h1>
+            <motion.p 
+              className="text-xl text-gray-600 dark:text-gray-300 mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              Select continents to focus your sorting experience
+            </motion.p>
+          </motion.div>
+
+          <ContinentSelector
+            selectedContinents={selectedContinents}
+            onContinentToggle={handleContinentToggle}
+            onSelectAll={handleSelectAllContinents}
+            onSelectNone={handleSelectNoContinents}
+          />
+
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
+          >
+            <motion.button
+              onClick={handleContinentSelection}
+              disabled={selectedContinents.length === 0}
+              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transition-all"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 200, delay: 1.2 }}
+              whileHover={selectedContinents.length > 0 ? { scale: 1.05, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" } : {}}
+              whileTap={selectedContinents.length > 0 ? { scale: 0.95 } : {}}
+            >
+              {selectedContinents.length === 0 ? 'Select at least one continent' : 'Start Sorting Selected Regions 🚀'}
+            </motion.button>
+
+            <motion.button
+              onClick={() => setView('start')}
+              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Back to Start
+            </motion.button>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  }
+
   if (view === 'sorting') {
     return (
       <motion.div 
@@ -248,9 +367,7 @@ export default function Home() {
               total={progress.total} 
               label="Countries Ranked"
             />
-          </motion.div>
-
-          {/* Comparison Cards */}
+          </motion.div>          {/* Comparison Cards */}
           <AnimatePresence mode="wait">
             {currentComparison && (
               <motion.div 
@@ -259,13 +376,13 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.4 }}
-              >
-                <motion.div
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              >                <motion.div
                   initial={{ opacity: 0, x: -100 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  whileHover={{ y: -5 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <FlagCard
                     country={currentComparison[0]}
@@ -277,8 +394,9 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, x: 100 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  whileHover={{ y: -5 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <FlagCard
                     country={currentComparison[1]}
@@ -325,8 +443,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
           >
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-              {[
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">              {[
                 { value: progress.ranked, label: "Ranked", color: "text-blue-500" },
                 { value: progress.remaining, label: "Remaining", color: "text-yellow-500" },
                 { value: progress.total, label: "Total", color: "text-green-500" }
@@ -337,15 +454,11 @@ export default function Home() {
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.9 + index * 0.1, type: "spring", stiffness: 200 }}
                 >
-                  <motion.div 
+                  <div 
                     className={`text-2xl font-bold ${stat.color}`}
-                    key={stat.value}
-                    initial={{ scale: 1.2 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3 }}
                   >
                     {stat.value}
-                  </motion.div>
+                  </div>
                   <div className="text-sm">{stat.label}</div>
                 </motion.div>
               ))}

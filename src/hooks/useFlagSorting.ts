@@ -17,17 +17,29 @@ interface SortingState {
 const STORAGE_KEY = 'flag-favourite-progress';
 
 export function useFlagSorting(initialCountries: Country[]) {
-  const [countries] = useState<RankedCountry[]>(
+  const [countries, setCountries] = useState<RankedCountry[]>(
     initialCountries.map(country => ({ ...country }))
-  );
+  );  // Update countries when initialCountries changes
+  useEffect(() => {
+    const newCountries = initialCountries.map(country => ({ ...country }));
+    setCountries(newCountries);
+    
+    // Reset state immediately when countries change
+    setState({
+      favorites: [],
+      unrankedCountries: newCountries,
+      currentComparison: newCountries.length >= 2 ? [newCountries[0], newCountries[1]] : null,
+      isComplete: false
+    });
+  }, [initialCountries]);
   
   // Load initial state from localStorage or use defaults
-  const loadInitialState = (): SortingState => {
+  const loadInitialState = useCallback((countriesList: RankedCountry[]): SortingState => {
     if (typeof window === 'undefined') {
       return {
         favorites: [],
-        unrankedCountries: initialCountries.map(country => ({ ...country })),
-        currentComparison: null,
+        unrankedCountries: countriesList,
+        currentComparison: countriesList.length >= 2 ? [countriesList[0], countriesList[1]] : null,
         isComplete: false
       };
     }
@@ -38,11 +50,11 @@ export function useFlagSorting(initialCountries: Country[]) {
         const parsedState = JSON.parse(saved) as SortingState;
         // Validate that the saved state has the same countries as our current list
         const savedCountryCodes = new Set([
-          ...parsedState.favorites.map(c => c.code),
-          ...parsedState.unrankedCountries.map(c => c.code),
-          ...(parsedState.currentComparison?.map(c => c.code) || [])
+          ...parsedState.favorites.map((c: RankedCountry) => c.code),
+          ...parsedState.unrankedCountries.map((c: RankedCountry) => c.code),
+          ...(parsedState.currentComparison?.map((c: RankedCountry) => c.code) || [])
         ]);
-        const currentCountryCodes = new Set(initialCountries.map(c => c.code));
+        const currentCountryCodes = new Set(countriesList.map(c => c.code));
         
         // If country lists match, restore saved state
         if (savedCountryCodes.size === currentCountryCodes.size && 
@@ -54,16 +66,16 @@ export function useFlagSorting(initialCountries: Country[]) {
       console.warn('Failed to load saved progress:', error);
     }
 
-    // Default state if no valid saved state
+    // Default state if no valid saved state or countries changed
     return {
       favorites: [],
-      unrankedCountries: initialCountries.map(country => ({ ...country })),
-      currentComparison: null,
+      unrankedCountries: countriesList,
+      currentComparison: countriesList.length >= 2 ? [countriesList[0], countriesList[1]] : null,
       isComplete: false
     };
-  };
+  }, []);
 
-  const [state, setState] = useState<SortingState>(loadInitialState);
+  const [state, setState] = useState<SortingState>(() => loadInitialState(countries));
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -101,40 +113,45 @@ export function useFlagSorting(initialCountries: Country[]) {
       if (!prevState.currentComparison) return prevState;
 
       const [country1, country2] = prevState.currentComparison;
-      const winner = chosenCountry;
-      const loser = winner === country1 ? country2 : country1;
+      const otherCountry = chosenCountry.code === country1.code ? country2 : country1;
 
-      // Add winner to favorites
-      const newFavorites = [...prevState.favorites, { ...winner, rank: prevState.favorites.length + 1 }];
+      // Binary insertion to maintain favorites ranking
+      const insertAtPosition = (arr: RankedCountry[], item: RankedCountry): RankedCountry[] => {
+        const newArr = [...arr, item];
+        return newArr.map((country, index) => ({ ...country, rank: index + 1 }));
+      };
 
-      // Remove both countries from unranked
-      const remainingUnranked = prevState.unrankedCountries.filter(
-        c => c.code !== country1.code && c.code !== country2.code
+      const newFavorites = insertAtPosition(prevState.favorites, chosenCountry);
+      const newUnranked = prevState.unrankedCountries.filter(
+        (c: RankedCountry) => c.code !== country1.code && c.code !== country2.code
       );
+      
+      // Add the non-chosen country back to unranked for later comparison
+      newUnranked.push(otherCountry);
 
-      // Add loser back to the end of unranked list for another chance
-      if (remainingUnranked.length > 0) {
-        remainingUnranked.push(loser);
-      }
-
-      // Determine next comparison and completion state
+      // Set next comparison
       let nextComparison: [RankedCountry, RankedCountry] | null = null;
       let isComplete = false;
 
-      if (remainingUnranked.length >= 2) {
-        nextComparison = [remainingUnranked[0], remainingUnranked[1]];
-      } else if (remainingUnranked.length === 1) {
-        // Last country automatically goes to favorites
-        newFavorites.push({ ...remainingUnranked[0], rank: newFavorites.length + 1 });
-        remainingUnranked.length = 0; // Clear the array
-        isComplete = true;
+      if (newUnranked.length >= 2) {
+        nextComparison = [newUnranked[0], newUnranked[1]];
+      } else if (newUnranked.length === 1) {
+        // Last country automatically gets lowest rank
+        const lastCountry = newUnranked[0];
+        const finalFavorites = insertAtPosition(newFavorites, lastCountry);
+        return {
+          favorites: finalFavorites,
+          unrankedCountries: [],
+          currentComparison: null,
+          isComplete: true
+        };
       } else {
         isComplete = true;
       }
 
       return {
         favorites: newFavorites,
-        unrankedCountries: remainingUnranked,
+        unrankedCountries: newUnranked,
         currentComparison: nextComparison,
         isComplete
       };
@@ -144,7 +161,7 @@ export function useFlagSorting(initialCountries: Country[]) {
   const reset = useCallback(() => {
     const newState: SortingState = {
       favorites: [],
-      unrankedCountries: countries.map(country => ({ ...country })),
+      unrankedCountries: countries,
       currentComparison: null,
       isComplete: false
     };
@@ -168,7 +185,7 @@ export function useFlagSorting(initialCountries: Country[]) {
       
       // Remove current comparison from unranked
       const remainingUnranked = prevState.unrankedCountries.filter(
-        c => c.code !== country1.code && c.code !== country2.code
+        (c: RankedCountry) => c.code !== country1.code && c.code !== country2.code
       );
 
       // Add both countries back to the end for later comparison

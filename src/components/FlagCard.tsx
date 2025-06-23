@@ -85,7 +85,6 @@ export default function FlagCard({
         initial={{ scale: 0, rotate: -90 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
-        whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
       >
         {getReliableFlagEmoji(country.code)}
       </motion.div>
