@@ -4,6 +4,7 @@ export interface Country {
   flag: string;
 }
 
+// 195 internationally recognized countries
 export const countries: Country[] = [
   { code: "AD", name: "Andorra", flag: "🇦🇩" },
   { code: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
@@ -183,6 +184,7 @@ export const countries: Country[] = [
   { code: "TR", name: "Turkey", flag: "🇹🇷" },
   { code: "TT", name: "Trinidad and Tobago", flag: "🇹🇹" },
   { code: "TV", name: "Tuvalu", flag: "🇹🇻" },
+  { code: "TW", name: "Taiwan", flag: "🇹🇼" },
   { code: "TZ", name: "Tanzania", flag: "🇹🇿" },
   { code: "UA", name: "Ukraine", flag: "🇺🇦" },
   { code: "UG", name: "Uganda", flag: "🇺🇬" },

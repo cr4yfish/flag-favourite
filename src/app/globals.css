@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure proper emoji rendering */
+.font-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif !important;
+  font-feature-settings: "liga" off, "kern" off;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fallback for systems that don't support flag emojis */
+@supports not (font-variation-settings: normal) {
+  .font-emoji {
+    font-family: "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", sans-serif !important;
+  }
+}
+
+/* Ensure emojis are rendered as color emojis */
+.emoji-color {
+  font-variant-emoji: emoji;
+}

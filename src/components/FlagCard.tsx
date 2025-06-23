@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { RankedCountry } from '@/hooks/useFlagSorting';
+import { getReliableFlagEmoji } from '@/utils/flagEmoji';
 
 interface FlagCardProps {
   country: RankedCountry;
@@ -74,15 +75,19 @@ export default function FlagCard({
           {country.rank}
         </motion.div>
       )}
-      
-      <motion.div 
-        className={`${flagSizes[size]} mb-3 select-none`}
+        <motion.div 
+        className={`${flagSizes[size]} mb-3 select-none font-emoji`}
+        style={{ 
+          fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
+          fontFeatureSettings: '"liga" off, "kern" off',
+          textRendering: 'optimizeSpeed'
+        }}
         initial={{ scale: 0, rotate: -90 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
         whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
       >
-        {country.flag}
+        {getReliableFlagEmoji(country.code)}
       </motion.div>
       
       <motion.h3 
