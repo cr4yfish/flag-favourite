@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Flag from 'react-world-flags';
 import { RankedCountry } from '@/hooks/useFlagSorting';
-import { getReliableFlagEmoji } from '@/utils/flagEmoji';
 
 interface FlagCardProps {
   country: RankedCountry;
@@ -23,11 +23,10 @@ export default function FlagCard({
     medium: 'p-3 sm:p-6 min-h-[140px] sm:min-h-[200px]',
     large: 'p-4 sm:p-8 min-h-[180px] sm:min-h-[240px]'
   };
-
   const flagSizes = {
-    small: 'text-2xl sm:text-4xl',
-    medium: 'text-4xl sm:text-6xl',
-    large: 'text-5xl sm:text-8xl'
+    small: { width: 32, height: 24 },      // 32x24 for small
+    medium: { width: 48, height: 36 },     // 48x36 for medium  
+    large: { width: 64, height: 48 }       // 64x48 for large
   };
 
   const textSizes = {
@@ -72,18 +71,38 @@ export default function FlagCard({
           {country.rank}
         </motion.div>
       )}        <motion.div 
-        className={`${flagSizes[size]} mb-2 sm:mb-3 select-none font-emoji`}
-        style={{ 
-          fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
-          fontFeatureSettings: '"liga" off, "kern" off',
-          textRendering: 'optimizeSpeed'
-        }}
-        initial={{ scale: 0, rotate: -90 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
-      >
-        {getReliableFlagEmoji(country.code)}
-      </motion.div>
+          className="mb-2 sm:mb-3 select-none flex items-center justify-center"
+          initial={{ scale: 0, rotate: -90 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+        >
+          <Flag 
+            code={country.code} 
+            style={{
+              width: flagSizes[size].width,
+              height: flagSizes[size].height,
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            fallback={
+              <div 
+                style={{
+                  width: flagSizes[size].width,
+                  height: flagSizes[size].height,
+                  backgroundColor: '#e5e7eb',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  color: '#6b7280'
+                }}
+              >
+                {country.code}
+              </div>
+            }
+          />
+        </motion.div>
       
       <motion.h3 
         className={`${textSizes[size]} font-semibold text-center text-gray-800 dark:text-gray-200 leading-tight px-1`}
