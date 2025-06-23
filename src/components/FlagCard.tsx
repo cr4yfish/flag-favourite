@@ -18,23 +18,22 @@ export default function FlagCard({
   className = '', 
   showRank = false, 
   size = 'medium' 
-}: FlagCardProps) {
-  const sizeClasses = {
-    small: 'p-3 min-h-[120px]',
-    medium: 'p-6 min-h-[200px]',
-    large: 'p-8 min-h-[240px]'
+}: FlagCardProps) {  const sizeClasses = {
+    small: 'p-2 sm:p-3 min-h-[100px] sm:min-h-[120px]',
+    medium: 'p-3 sm:p-6 min-h-[140px] sm:min-h-[200px]',
+    large: 'p-4 sm:p-8 min-h-[180px] sm:min-h-[240px]'
   };
 
   const flagSizes = {
-    small: 'text-4xl',
-    medium: 'text-6xl',
-    large: 'text-8xl'
+    small: 'text-2xl sm:text-4xl',
+    medium: 'text-4xl sm:text-6xl',
+    large: 'text-5xl sm:text-8xl'
   };
 
   const textSizes = {
-    small: 'text-sm',
-    medium: 'text-lg',
-    large: 'text-xl'
+    small: 'text-xs sm:text-sm',
+    medium: 'text-sm sm:text-lg',
+    large: 'text-base sm:text-xl'
   };
   return (
     <motion.div
@@ -52,31 +51,28 @@ export default function FlagCard({
         stiffness: 300, 
         damping: 20,
         duration: 0.3
-      }}
-      className={`
+      }}      className={`
         ${sizeClasses[size]}
         bg-white dark:bg-gray-800 
         border-2 border-gray-200 dark:border-gray-600 
-        rounded-2xl shadow-lg 
+        rounded-xl sm:rounded-2xl shadow-lg 
         flex flex-col items-center justify-center 
-        relative
+        relative w-full
         ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}
       onClick={onClick}
-    >
-      {showRank && country.rank && (
+    >      {showRank && country.rank && (
         <motion.div 
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
-          className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold z-10"
+          className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-blue-500 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm font-bold z-10"
         >
           {country.rank}
         </motion.div>
-      )}
-        <motion.div 
-        className={`${flagSizes[size]} mb-3 select-none font-emoji`}
+      )}        <motion.div 
+        className={`${flagSizes[size]} mb-2 sm:mb-3 select-none font-emoji`}
         style={{ 
           fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
           fontFeatureSettings: '"liga" off, "kern" off',
@@ -90,7 +86,7 @@ export default function FlagCard({
       </motion.div>
       
       <motion.h3 
-        className={`${textSizes[size]} font-semibold text-center text-gray-800 dark:text-gray-200 leading-tight`}
+        className={`${textSizes[size]} font-semibold text-center text-gray-800 dark:text-gray-200 leading-tight px-1`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
