@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { RankedCountry } from '@/hooks/useFlagSorting';
 
 interface FlagCardProps {
@@ -34,38 +35,73 @@ export default function FlagCard({
     medium: 'text-lg',
     large: 'text-xl'
   };
-
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: -20 }}
+      whileHover={onClick ? { 
+        scale: 1.05, 
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        borderColor: "#60a5fa"
+      } : {}}
+      whileTap={onClick ? { scale: 0.95 } : {}}
+      transition={{ 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 20,
+        duration: 0.3
+      }}
       className={`
         ${sizeClasses[size]}
         bg-white dark:bg-gray-800 
         border-2 border-gray-200 dark:border-gray-600 
         rounded-2xl shadow-lg 
         flex flex-col items-center justify-center 
-        transition-all duration-200 
-        ${onClick ? 'cursor-pointer hover:shadow-xl hover:scale-105 hover:border-blue-400 dark:hover:border-blue-500' : ''}
+        relative
+        ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}
       onClick={onClick}
     >
       {showRank && country.rank && (
-        <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+        <motion.div 
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
+          className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold z-10"
+        >
           {country.rank}
-        </div>
+        </motion.div>
       )}
       
-      <div className={`${flagSizes[size]} mb-3 select-none`}>
+      <motion.div 
+        className={`${flagSizes[size]} mb-3 select-none`}
+        initial={{ scale: 0, rotate: -90 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+        whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+      >
         {country.flag}
-      </div>
+      </motion.div>
       
-      <h3 className={`${textSizes[size]} font-semibold text-center text-gray-800 dark:text-gray-200 leading-tight`}>
+      <motion.h3 
+        className={`${textSizes[size]} font-semibold text-center text-gray-800 dark:text-gray-200 leading-tight`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
         {country.name}
-      </h3>
+      </motion.h3>
       
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider">
+      <motion.p 
+        className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
         {country.code}
-      </p>
-    </div>
+      </motion.p>
+    </motion.div>
   );
 }
