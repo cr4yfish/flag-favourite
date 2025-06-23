@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { countries, getCountriesByContinent, Continent } from '@/data/countries';
 import { useFlagSorting, RankedCountry } from '@/hooks/useFlagSorting';
+import { generateShareUrl, generateShareDescription } from '@/utils/shareRankings';
 import FlagCard from '@/components/FlagCard';
 import ProgressBar from '@/components/ProgressBar';
 import ContinentSelector from '@/components/ContinentSelector';
@@ -111,9 +112,52 @@ export default function Home() {
     setSelectedContinents([]);
     setFilteredCountries(countries);
   };
-
   const handleViewResults = () => {
     setView('results');
+  };
+
+  const handleShare = async () => {
+    if (favorites.length === 0) return;
+
+    const shareUrl = generateShareUrl(favorites);
+    const shareDescription = generateShareDescription(favorites);
+
+    if (navigator.share) {
+      // Use native sharing if available (mobile devices)
+      try {
+        await navigator.share({
+          title: 'My Flag Favorites Ranking',
+          text: shareDescription,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or sharing failed, fall back to clipboard
+        if (err instanceof Error && err.name !== 'AbortError') {
+          await copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      // Fall back to clipboard copy
+      await copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here
+      alert('Share link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Share link copied to clipboard!');
+    }
   };
 
   if (view === 'start') {
@@ -505,9 +549,7 @@ export default function Home() {
                 : 'No rankings yet. Start sorting to see your favorites!'
               }
             </motion.p>
-          </motion.div>
-
-          {/* Action Buttons */}
+          </motion.div>          {/* Action Buttons */}
           <motion.div 
             className="flex flex-wrap justify-center gap-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
@@ -515,18 +557,20 @@ export default function Home() {
             transition={{ delay: 0.5 }}
           >
             {[
-              { text: favorites.length > 0 ? 'Continue Sorting' : 'Start Sorting', onClick: () => setView('sorting'), color: "bg-blue-500 hover:bg-blue-600" },
-              { text: "Start Over", onClick: handleReset, color: "bg-red-500 hover:bg-red-600" }
+              { text: favorites.length > 0 ? 'Continue Sorting' : 'Start Sorting', onClick: () => setView('sorting'), color: "bg-blue-500 hover:bg-blue-600", disabled: false },
+              { text: "Share Results", onClick: handleShare, color: "bg-green-500 hover:bg-green-600", disabled: favorites.length === 0 },
+              { text: "Start Over", onClick: handleReset, color: "bg-red-500 hover:bg-red-600", disabled: false }
             ].map((button, index) => (
               <motion.button
                 key={button.text}
                 onClick={button.onClick}
-                className={`${button.color} text-white font-semibold py-2 px-6 rounded-full transition-colors`}
+                disabled={button.disabled}
+                className={`${button.color} text-white font-semibold py-2 px-6 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6 + index * 0.1, type: "spring", stiffness: 200 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={!button.disabled ? { scale: 1.05 } : {}}
+                whileTap={!button.disabled ? { scale: 0.95 } : {}}
               >
                 {button.text}
               </motion.button>
