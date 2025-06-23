@@ -40,16 +40,8 @@ export default function ContinentSelector({
       >
         Choose Continents to Sort
       </motion.h2>
-      
-      <motion.p 
-        className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center mb-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        Select which continents you&apos;d like to include in your flag sorting. 
-        You can choose one or more continents to focus on specific regions.
-      </motion.p>      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+    
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
         {continentStats.map((stat, index) => {
           const isSelected = selectedContinents.includes(stat.continent);
           
